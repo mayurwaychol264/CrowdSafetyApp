@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
     View,
     Text,
@@ -13,6 +14,29 @@ import {
 } from '@expo/vector-icons';
 
 export default function HomeScreen({ navigation }) {
+
+    const [greeting, setGreeting] = useState('');
+    const [today, setToday] = useState('');
+
+    useEffect(() => {
+        const hour = new Date().getHours();
+
+        if (hour < 12) {
+            setGreeting('Good Morning');
+        } else if (hour < 18) {
+            setGreeting('Good Afternoon');
+        } else {
+            setGreeting('Good Evening');
+        }
+
+        const date = new Date().toLocaleDateString('en-IN', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+        });
+
+        setToday(date);
+    }, []);
     return (
         <ScrollView
             style={styles.container}
@@ -20,19 +44,17 @@ export default function HomeScreen({ navigation }) {
         >
 
             <View style={styles.header}>
-
                 <Text style={styles.welcome}>
-                    👋 Welcome
-                </Text>
-
-                <Text style={styles.title}>
-                    Crowd Safety Dashboard
+                    👋 {greeting}, Mayur
                 </Text>
 
                 <Text style={styles.subtitle}>
-                    Stay Safe • Stay Alert
+                    Stay Safe • Stay Connected
                 </Text>
 
+                <Text style={styles.dateText}>
+                    {today}
+                </Text>
             </View>
 
             <TouchableOpacity
@@ -40,20 +62,19 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('SOS')}
             >
 
-                <MaterialIcons
-                    name="warning"
-                    size={45}
+                <MaterialCommunityIcons
+                    name="alarm-light"
+                    size={50}
                     color="white"
                 />
 
                 <Text style={styles.sosTitle}>
-                    EMERGENCY SOS
+                    Emergency SOS
                 </Text>
 
                 <Text style={styles.sosSubtitle}>
-                    Tap instantly during emergency
+                    One Tap Emergency Help
                 </Text>
-
             </TouchableOpacity>
             <View style={styles.grid}>
 
@@ -70,6 +91,9 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.cardTitle}>
                         Live Location
                     </Text>
+                    <Text style={styles.cardSubtitle}>
+                        Share your location
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -84,6 +108,9 @@ export default function HomeScreen({ navigation }) {
 
                     <Text style={styles.cardTitle}>
                         Crowd Status
+                    </Text>
+                    <Text style={styles.cardSubtitle}>
+                        Nearby crowd info
                     </Text>
                 </TouchableOpacity>
 
@@ -100,6 +127,9 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.cardTitle}>
                         Contacts
                     </Text>
+                    <Text style={styles.cardSubtitle}>
+                        Trusted contacts
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -115,6 +145,9 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.cardTitle}>
                         SOS History
                     </Text>
+                    <Text style={styles.cardSubtitle}>
+                        Previous alerts
+                    </Text>
                 </TouchableOpacity>
 
             </View>
@@ -124,15 +157,21 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('Profile')}
             >
 
-                <MaterialIcons
-                    name="person"
-                    size={35}
-                    color="#0066ff"
+                <MaterialCommunityIcons
+                    name="account-circle"
+                    size={42}
+                    color="#2563EB"
                 />
 
-                <Text style={styles.profileText}>
-                    Profile
-                </Text>
+                <View>
+                    <Text style={styles.profileText}>
+                        My Profile
+                    </Text>
+
+                    <Text style={styles.profileSubtitle}>
+                        Manage your account
+                    </Text>
+                </View>
 
             </TouchableOpacity>
 
@@ -154,8 +193,9 @@ const styles = StyleSheet.create({
     },
 
     welcome: {
-        fontSize: 20,
-        color: '#666',
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: '#1F2937',
     },
 
     title: {
@@ -164,33 +204,39 @@ const styles = StyleSheet.create({
         color: '#1F2937',
         marginTop: 5,
     },
-
-    subtitle: {
-        fontSize: 15,
-        color: '#777',
-        marginTop: 5,
-    },
-
     sosCard: {
         backgroundColor: '#EF4444',
         borderRadius: 22,
-        padding: 28,
+        paddingVertical: 30,
+        paddingHorizontal: 20,
         alignItems: 'center',
-        elevation: 8,
+        shadowColor: '#EF4444',
+        shadowOffset: {
+            width: 0,
+            height: 8,
+        },
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
+        elevation: 10,
         marginBottom: 25,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#6B7280',
+        marginTop: 6,
     },
 
     sosTitle: {
-        color: 'white',
-        fontSize: 24,
+        color: '#fff',
+        fontSize: 28,
         fontWeight: 'bold',
         marginTop: 10,
     },
 
     sosSubtitle: {
-        color: '#FFEAEA',
-        marginTop: 6,
-        fontSize: 15,
+        color: '#FEE2E2',
+        fontSize: 16,
+        marginTop: 8,
     },
 
     grid: {
@@ -233,5 +279,22 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: 12,
         color: '#333',
+    },
+    dateText: {
+        fontSize: 14,
+        color: '#9CA3AF',
+        marginTop: 6,
+    },
+
+    cardSubtitle: {
+        marginTop: 6,
+        fontSize: 13,
+        color: '#6B7280',
+        textAlign: 'center',
+    },
+    profileSubtitle: {
+        fontSize: 13,
+        color: '#6B7280',
+        marginTop: 3,
     },
 });
