@@ -6,12 +6,13 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
+    ScrollView,
 } from 'react-native';
-
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-
+import { MaterialIcons } from "@expo/vector-icons";
 export default function ProfileScreen({ navigation }) {
 
     const [name, setName] = useState('');
@@ -74,9 +75,26 @@ export default function ProfileScreen({ navigation }) {
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+        >
 
-            <Text style={styles.title}>Profile</Text>
+            <View style={styles.profileHeader}>
+                <MaterialCommunityIcons
+                    name="account-circle"
+                    size={90}
+                    color="#2563EB"
+                />
+
+                <Text style={styles.title}>
+                    {name || "User"}
+                </Text>
+
+                <Text style={styles.emailText}>
+                    {email}
+                </Text>
+            </View>
 
             <Text style={styles.label}>Name</Text>
 
@@ -98,48 +116,118 @@ export default function ProfileScreen({ navigation }) {
             />
 
             <Text style={styles.label}>Role</Text>
-            <Text style={styles.value}>{role}</Text>
-            <TouchableOpacity
-                style={styles.button}
-                onPress={handleLogout}
-            >
-                <Text style={styles.buttonText}>Logout</Text>
 
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#0066ff' }]}
-                    onPress={handleUpdateProfile}
-                >
-                    <Text style={styles.buttonText}>
-                        Save Changes
-                    </Text>
-                </TouchableOpacity>
+            <View style={styles.roleBadge}>
+                <Text style={styles.roleText}>
+                    {role.toUpperCase()}
+                </Text>
+            </View>
+            <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleUpdateProfile}
+            >
+
+                <MaterialIcons
+                    name="save"
+                    size={22}
+                    color="white"
+                />
+
+                <Text style={styles.buttonText}>
+                    Save Changes
+                </Text>
+
             </TouchableOpacity>
 
-        </View>
+            <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}
+            >
+
+                <MaterialIcons
+                    name="logout"
+                    size={22}
+                    color="white"
+                />
+
+                <Text style={styles.buttonText}>
+                    Logout
+                </Text>
+
+            </TouchableOpacity>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: "#F8FAFC",
         padding: 20,
     },
 
+
+    profileHeader: {
+        alignItems: 'center',
+        marginTop: 40,
+        marginBottom: 30,
+    },
+
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#1F2937',
+        marginTop: 10,
+    },
+
+    emailText: {
+        fontSize: 15,
+        color: '#6B7280',
+        marginTop: 4,
+    },
     title: {
         fontSize: 30,
         fontWeight: 'bold',
         marginBottom: 40,
     },
+    saveButton: {
+        backgroundColor: "#2563EB",
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 16,
+        borderRadius: 12,
+        marginTop: 20,
+    },
 
+    logoutButton: {
+        backgroundColor: "#EF4444",
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 16,
+        borderRadius: 12,
+        marginTop: 15,
+        marginBottom: 40,
+    },
     label: {
         fontSize: 18,
         fontWeight: 'bold',
         marginTop: 10,
     },
+    roleBadge: {
+        backgroundColor: "#DBEAFE",
+        alignSelf: "flex-start",
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 20,
+        marginBottom: 20,
+    },
 
+    roleText: {
+        color: "#2563EB",
+        fontWeight: "bold",
+    },
     value: {
         fontSize: 18,
         color: '#0066ff',
