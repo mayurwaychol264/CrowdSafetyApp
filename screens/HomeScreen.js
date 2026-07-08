@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import {
     View,
@@ -12,12 +13,25 @@ import {
     MaterialIcons,
     MaterialCommunityIcons,
 } from '@expo/vector-icons';
+import { auth, db } from '../firebase/config';
 
+import { doc, getDoc, query, where } from 'firebase/firestore';
+import {
+    collection,
+    getDocs,
+} from 'firebase/firestore';
 export default function HomeScreen({ navigation }) {
 
     const [greeting, setGreeting] = useState('');
     const [today, setToday] = useState('');
-
+    const [userName, setUserName] = useState('');
+    const [contactCount, setContactCount] = useState(0);
+    const [activeSOS, setActiveSOS] = useState(false);
+    const [hasActiveSOS, setHasActiveSOS] = useState
+        (false);
+    const [locationActive, setLocationActive] = useState(false);
+    const [lastSOS, setLastSOS] = useState("No Active SOS");
+    const [lastLocation, setLastLocation] = useState("Not Available");
     useEffect(() => {
         const hour = new Date().getHours();
 
@@ -36,7 +50,83 @@ export default function HomeScreen({ navigation }) {
         });
 
         setToday(date);
+
+        fetchUser();
+
     }, []);
+
+    const fetchUser = async () => {
+
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        const docSnap = await getDoc(
+            doc(db, "users", user.uid)
+        );
+
+        if (docSnap.exists()) {
+            setUserName(docSnap.data().name);
+        }
+
+    };
+
+
+
+    const fetchDashboardData = async () => {
+
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        // Emergency Contacts Count
+        const contactsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "emergencyContacts"
+            )
+        );
+
+        setContactCount(contactsSnapshot.size);
+        const sosQuery = query(
+            collection(db, "activeSOS"),
+            where("userId", "==", user.uid)
+        );
+
+        const sosSnapshot = await getDocs(sosQuery);
+
+        setHasActiveSOS(!sosSnapshot.empty);
+
+        const locationDoc = await getDoc(
+            doc(db, "locations", user.uid)
+        );
+
+        setLocationActive(locationDoc.exists());
+
+        if (!sosSnapshot.empty) {
+            setLastSOS("SOS Active");
+        } else {
+            setLastSOS("No Active SOS");
+        }
+
+        if (locationDoc.exists()) {
+            setLastLocation("Available");
+        } else {
+            setLastLocation("Not Available");
+        }
+
+        console.log("Location Docs:", locationSnapshot.size);
+        console.log(locationSnapshot.empty);
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchDashboardData();
+        }, [])
+    );
+
     return (
         <ScrollView
             style={styles.container}
@@ -44,10 +134,10 @@ export default function HomeScreen({ navigation }) {
         >
 
             <View style={styles.header}>
-                <Text style={styles.welcome}>
-                    👋 {greeting}, Mayur
-                </Text>
 
+                <Text style={styles.welcome}>
+                    👋 {greeting}, {userName}
+                </Text>
                 <Text style={styles.subtitle}>
                     Stay Safe • Stay Connected
                 </Text>
@@ -57,6 +147,63 @@ export default function HomeScreen({ navigation }) {
                 </Text>
             </View>
 
+
+            <View style={styles.statsCard}>
+
+                <Text style={styles.statsTitle}>
+                    📊 Quick Stats
+                </Text>
+                <View style={styles.statRow}>
+                    <Text>📍 Live Location</Text>
+
+                    <Text
+                        style={{
+                            color: locationActive ? "green" : "red",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        {locationActive ? "ACTIVE" : "OFF"}
+                    </Text>
+                </View>
+
+
+                <View style={styles.statRow}>
+                    <Text>📞 Emergency Contacts</Text>
+                    <Text>{contactCount}</Text>
+                </View>
+
+                <View style={styles.statRow}>
+                    <Text>🚨 Active SOS</Text>
+
+                    <Text
+                        style={{
+                            color: hasActiveSOS ? "red" : "green",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        {hasActiveSOS ? "ACTIVE" : "SAFE"}
+                    </Text>
+                </View>
+
+
+
+            </View>
+            <View style={styles.activityCard}>
+
+                <Text style={styles.activityTitle}>
+                    🕒 Recent Activity
+                </Text>
+
+                <View style={styles.statRow}>
+                    <Text>🚨 Last SOS</Text>
+                    <Text>{lastSOS}</Text>
+                </View>
+
+                <View style={styles.statRow}>
+                    <Text>📍 Last Location</Text>
+                    <Text>{lastLocation}</Text>
+                </View>
+            </View>
             <TouchableOpacity
                 style={styles.sosCard}
                 onPress={() => navigation.navigate('SOS')}
@@ -187,6 +334,20 @@ const styles = StyleSheet.create({
         paddingTop: 40,
     },
 
+
+    activityCard: {
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        padding: 18,
+        marginBottom: 20,
+        elevation: 4,
+    },
+
+    activityTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 12,
+    },
     header: {
         marginTop: 20,
         marginBottom: 25,
@@ -296,5 +457,25 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#6B7280',
         marginTop: 3,
+    },
+
+    statsCard: {
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        padding: 18,
+        marginBottom: 20,
+        elevation: 4,
+    },
+
+    statsTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 12,
+    },
+
+    statRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginVertical: 6,
     },
 });

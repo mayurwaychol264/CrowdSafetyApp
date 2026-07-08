@@ -48,6 +48,7 @@ export default function LocationScreen() {
                             await setDoc(
                                 doc(db, "locations", user.uid),
                                 {
+                                    userId: user.uid,
                                     latitude: newLocation.coords.latitude,
                                     longitude: newLocation.coords.longitude,
                                     updatedAt: serverTimestamp(),
