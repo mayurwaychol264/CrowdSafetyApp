@@ -117,8 +117,7 @@ export default function HomeScreen({ navigation }) {
             setLastLocation("Not Available");
         }
 
-        console.log("Location Docs:", locationSnapshot.size);
-        console.log(locationSnapshot.empty);
+
     };
 
     useFocusEffect(
@@ -188,22 +187,7 @@ export default function HomeScreen({ navigation }) {
 
 
             </View>
-            <View style={styles.activityCard}>
 
-                <Text style={styles.activityTitle}>
-                    🕒 Recent Activity
-                </Text>
-
-                <View style={styles.statRow}>
-                    <Text>🚨 Last SOS</Text>
-                    <Text>{lastSOS}</Text>
-                </View>
-
-                <View style={styles.statRow}>
-                    <Text>📍 Last Location</Text>
-                    <Text>{lastLocation}</Text>
-                </View>
-            </View>
             <TouchableOpacity
                 style={styles.sosCard}
                 onPress={() => navigation.navigate('SOS')}

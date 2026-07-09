@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import * as Location from 'expo-location';
 import {
     View,
@@ -21,7 +21,35 @@ import {
 } from 'firebase/firestore';
 export default function SosScreen() {
 
-    const handleSOS = async () => {
+    const [sending, setSending] = useState(false);
+    const [countdown, setCountdown] = useState(null);
+    const [timerRunning, setTimerRunning] = useState(false);
+    const timerRef = React.useRef(null);
+    const startCountdown = () => {
+
+        setTimerRunning(true);
+        setCountdown(3);
+
+        let count = 3;
+
+        timerRef.current = setInterval(() => {
+
+            count--;
+
+            if (count > 0) {
+                setCountdown(count);
+            } else {
+                clearInterval(timerRef.current);
+                setCountdown(null);
+                setTimerRunning(false);
+
+                sendSOS();
+            }
+
+        }, 1000);
+    };
+    const sendSOS = async () => {
+        setSending(true);
         try {
 
             const user = auth.currentUser;
@@ -95,14 +123,33 @@ export default function SosScreen() {
                 historyId: historyRef.id,
             });
 
+            setSending(false);
             Alert.alert(
                 '🚨 EMERGENCY ALERT',
                 'SOS Alert Sent Successfully!'
             );
 
         } catch (error) {
+            setSending(false);
             Alert.alert('Error', error.message);
+
         }
+    };
+    const cancelSOS = () => {
+
+        clearInterval(timerRef.current);
+
+        setCountdown(null);
+
+        setTimerRunning(false);
+
+        setSending(false);
+
+        Alert.alert(
+            "Cancelled",
+            "SOS was not sent."
+        );
+
     };
 
     return (
@@ -111,14 +158,80 @@ export default function SosScreen() {
             <Text style={styles.title}>
                 Emergency SOS
             </Text>
+            <Text style={styles.subtitle}>
+                If you are in danger,
+                press the button below.
+            </Text>
+            {
+                timerRunning && (
 
+                    <Text style={styles.countdownText}>
+                        {countdown}
+                    </Text>
+
+                )
+            }
             <TouchableOpacity
-                style={styles.sosButton}
-                onPress={handleSOS}
+                style={[
+                    styles.sosButton,
+                    sending && { opacity: 0.6 }
+                ]}
+                onPress={() => {
+                    Alert.alert(
+                        "🚨 Confirm SOS",
+                        "Are you sure you want to send an emergency alert?",
+                        [
+                            {
+                                text: "Cancel",
+                                style: "cancel",
+                            },
+                            {
+                                text: "Send SOS",
+                                style: "destructive",
+                                onPress: startCountdown,
+                            },
+                        ]
+                    );
+                }}
+                disabled={sending || timerRunning}
             >
-                <Text style={styles.sosText}>SOS</Text>
+                {
+                    timerRunning && (
+
+                        <TouchableOpacity
+                            style={styles.cancelButton}
+                            onPress={cancelSOS}
+                        >
+
+                            <Text style={styles.cancelText}>
+                                Cancel SOS
+                            </Text>
+
+                        </TouchableOpacity>
+
+                    )
+                }
+
+                <Text style={styles.sosText}>
+                    {sending ? "Sending..." : "SOS"}
+                </Text>
             </TouchableOpacity>
 
+            <View style={styles.statusCard}>
+
+                <Text style={styles.statusTitle}>
+                    Emergency Status
+                </Text>
+
+                <Text style={styles.statusText}>
+                    📍 Location Ready
+                </Text>
+
+                <Text style={styles.statusText}>
+                    👥 Emergency Contacts Loaded
+                </Text>
+
+            </View>
             <Text style={styles.info}>
                 Press only in emergency situations
             </Text>
@@ -132,15 +245,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F8FAFC',
+        padding: 20,
     },
 
     title: {
-        fontSize: 30,
+        fontSize: 32,
         fontWeight: 'bold',
-        marginBottom: 40,
+        color: '#1F2937',
+        marginBottom: 15,
     },
-
     sosButton: {
         width: 180,
         height: 180,
@@ -158,8 +272,57 @@ const styles = StyleSheet.create({
     },
 
     info: {
-        marginTop: 30,
+        marginTop: 25,
         fontSize: 16,
-        color: 'gray',
+        color: '#6B7280',
+        textAlign: 'center',
+    },
+
+    subtitle: {
+        fontSize: 16,
+        color: "#6B7280",
+        textAlign: "center",
+        marginBottom: 30,
+        lineHeight: 24,
+    },
+    statusCard: {
+        width: "100%",
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        padding: 18,
+        marginTop: 30,
+        elevation: 5,
+    },
+
+    statusTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 12,
+    },
+
+    statusText: {
+        fontSize: 15,
+        marginBottom: 8,
+        color: "#374151",
+    },
+    cancelButton: {
+        marginTop: 20,
+        backgroundColor: "#374151",
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 10,
+    },
+
+    cancelText: {
+        color: "white",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+
+    countdownText: {
+        fontSize: 70,
+        fontWeight: "bold",
+        color: "#EF4444",
+        marginBottom: 20,
     },
 });
