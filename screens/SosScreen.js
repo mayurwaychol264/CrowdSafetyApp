@@ -19,12 +19,12 @@ import {
     doc,
     setDoc,
 } from 'firebase/firestore';
-export default function SosScreen() {
+export default function SosScreen({ navigation }) {
 
     const [sending, setSending] = useState(false);
     const [countdown, setCountdown] = useState(null);
     const [timerRunning, setTimerRunning] = useState(false);
-    const timerRef = React.useRef(null);
+    const timerRef = useRef(null);
     const startCountdown = () => {
 
         setTimerRunning(true);
@@ -58,6 +58,8 @@ export default function SosScreen() {
                 await Location.requestForegroundPermissionsAsync();
 
             if (status !== 'granted') {
+
+                setSending(false);
                 Alert.alert(
                     'Permission Denied',
                     'Location permission is required'
@@ -125,8 +127,14 @@ export default function SosScreen() {
 
             setSending(false);
             Alert.alert(
-                '🚨 EMERGENCY ALERT',
-                'SOS Alert Sent Successfully!'
+                "✅ SOS Sent",
+                "Emergency alert has been sent successfully.",
+                [
+                    {
+                        text: "OK",
+                        onPress: () => navigation.navigate("Home"),
+                    },
+                ]
             );
 
         } catch (error) {
@@ -186,7 +194,7 @@ export default function SosScreen() {
                                 style: "cancel",
                             },
                             {
-                                text: "Send SOS",
+                                text: "Start Countdown",
                                 style: "destructive",
                                 onPress: startCountdown,
                             },
@@ -195,27 +203,31 @@ export default function SosScreen() {
                 }}
                 disabled={sending || timerRunning}
             >
-                {
-                    timerRunning && (
 
-                        <TouchableOpacity
-                            style={styles.cancelButton}
-                            onPress={cancelSOS}
-                        >
-
-                            <Text style={styles.cancelText}>
-                                Cancel SOS
-                            </Text>
-
-                        </TouchableOpacity>
-
-                    )
-                }
 
                 <Text style={styles.sosText}>
                     {sending ? "Sending..." : "SOS"}
                 </Text>
             </TouchableOpacity>
+
+
+            {
+                timerRunning && (
+
+                    <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={cancelSOS}
+                    >
+
+                        <Text style={styles.cancelText}>
+                            Cancel SOS
+                        </Text>
+
+                    </TouchableOpacity>
+
+                )
+            }
+
 
             <View style={styles.statusCard}>
 
