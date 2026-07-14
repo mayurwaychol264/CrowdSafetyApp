@@ -14,6 +14,7 @@ import {
     addDoc,
     serverTimestamp,
     getDocs,
+    getDoc,
     query,
     where,
     doc,
@@ -54,6 +55,14 @@ export default function SosScreen({ navigation }) {
 
             const user = auth.currentUser;
 
+            const userDoc = await getDoc(
+                doc(db, "users", user.uid)
+            );
+
+            const userName = userDoc.exists()
+                ? userDoc.data().name
+                : "Unknown";
+
             let { status } =
                 await Location.requestForegroundPermissionsAsync();
 
@@ -92,7 +101,7 @@ export default function SosScreen({ navigation }) {
 
                 email: user.email,
 
-                userName: user.displayName || "Unknown",
+                userName: userName,
 
                 latitude: currentLocation.coords.latitude,
 
@@ -110,7 +119,7 @@ export default function SosScreen({ navigation }) {
 
                 email: user.email,
 
-                userName: user.displayName || "Unknown",
+                userName: userName,
 
                 latitude: currentLocation.coords.latitude,
 
