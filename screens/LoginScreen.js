@@ -12,14 +12,17 @@ import {
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, } from 'firebase/firestore';
 import { Image } from 'react-native';
 import Logo from '../assets/images/shield-logo.png';
+import { registerForPushNotificationsAsync }
+    from "../utils/registerForPushNotifications";
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
     const handleLogin = async () => {
         setLoading(true);
 
@@ -57,9 +60,21 @@ export default function LoginScreen({ navigation }) {
             if (docSnap.exists()) {
                 role = docSnap.data().role || 'user';
             }
-            setLoading(false);
+            
             Alert.alert('Success', 'Login Successful');
 
+
+            const pushToken =
+                await registerForPushNotificationsAsync();
+
+            if (pushToken) {
+                await updateDoc(doc(db, "users", user.uid), {
+                    pushToken,
+                    tokenUpdatedAt: new Date(),
+                });
+            }
+
+            setLoading(false);
             if (role === 'admin') {
                 navigation.navigate('AdminMap');
             } else {
@@ -71,6 +86,8 @@ export default function LoginScreen({ navigation }) {
             Alert.alert('Login Failed', error.message);
         }
     };
+
+
 
     return (
         <View style={styles.container}>

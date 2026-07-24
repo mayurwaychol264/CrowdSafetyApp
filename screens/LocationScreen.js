@@ -81,29 +81,38 @@ export default function LocationScreen() {
     }
 
     return (
-        <MapView
-            style={styles.map}
-            initialRegion={{
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }}
-        >
-            <Marker
-                coordinate={{
+        <View style={styles.container}>
+            <MapView
+                style={styles.map}
+                region={{
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
                 }}
-                title="You are here"
-            />
-        </MapView>
+                showsUserLocation={true}
+                followsUserLocation={true}
+            >
+                <Marker
+                    coordinate={{
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude,
+                    }}
+                    title="You are here"
+                />
+            </MapView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    map: {
+    container: {
         flex: 1,
+    },
+
+    map: {
+        width: '100%',
+        height: '100%',
     },
 
     loader: {
