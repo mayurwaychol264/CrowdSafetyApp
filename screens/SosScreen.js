@@ -8,18 +8,8 @@ import {
     Alert,
 } from 'react-native';
 
-import { auth, db } from '../firebase/config';
-import {
-    collection,
-    addDoc,
-    serverTimestamp,
-    getDocs,
-    getDoc,
-    query,
-    where,
-    doc,
-    setDoc,
-} from 'firebase/firestore';
+import { auth } from '../firebase/config';
+const API_BASE_URL = "http://172.25.93.164:5000";
 export default function SosScreen({ navigation }) {
 
     const [sending, setSending] = useState(false);
@@ -51,106 +41,90 @@ export default function SosScreen({ navigation }) {
     };
     const sendSOS = async () => {
         setSending(true);
-        try {
 
+        try {
             const user = auth.currentUser;
 
-            const userDoc = await getDoc(
-                doc(db, "users", user.uid)
-            );
+            if (!user) {
+                throw new Error("You must be logged in to send SOS.");
+            }
 
-            const userName = userDoc.exists()
-                ? userDoc.data().name
-                : "Unknown";
+            if (!API_BASE_URL) {
+                throw new Error("Backend URL is not configured.");
+            }
 
-            let { status } =
+            const { status } =
                 await Location.requestForegroundPermissionsAsync();
 
-            if (status !== 'granted') {
-
-                setSending(false);
+            if (status !== "granted") {
                 Alert.alert(
-                    'Permission Denied',
-                    'Location permission is required'
+                    "Permission Denied",
+                    "Location permission is required."
                 );
                 return;
             }
 
-            let currentLocation =
-                await Location.getCurrentPositionAsync({});
-            const contactsSnapshot = await getDocs(
-                collection(
-                    db,
-                    'users',
-                    user.uid,
-                    'emergencyContacts'
-                )
+            const currentLocation =
+                await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.High,
+                });
+
+            const idToken = await user.getIdToken(true);
+            console.log("FRESH TOKEN:", idToken);
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/sos`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({
+                        latitude:
+                            currentLocation.coords.latitude,
+                        longitude:
+                            currentLocation.coords.longitude,
+                        message:
+                            "Emergency! I need immediate help.",
+                    }),
+                }
             );
 
-            const emergencyContacts = [];
+            const responseData = await response
+                .json()
+                .catch(() => ({}));
 
-            contactsSnapshot.forEach((doc) => {
-                emergencyContacts.push({
-                    id: doc.id,
-                    ...doc.data(),
-                });
-            });
-            const historyRef = await addDoc(collection(db, 'sosHistory'), {
+            if (!response.ok) {
+                throw new Error(
+                    responseData.message ||
+                    `Request failed with status ${response.status}`
+                );
+            }
 
-                userId: user.uid,
-
-                email: user.email,
-
-                userName: userName,
-
-                latitude: currentLocation.coords.latitude,
-
-                longitude: currentLocation.coords.longitude,
-
-                status: "Active",
-
-                createdAt: serverTimestamp(),
-                emergencyContacts: emergencyContacts,
-            });
-
-            await setDoc(doc(db, 'activeSOS', user.uid), {
-
-                userId: user.uid,
-
-                email: user.email,
-
-                userName: userName,
-
-                latitude: currentLocation.coords.latitude,
-
-                longitude: currentLocation.coords.longitude,
-
-                status: "Active",
-
-                createdAt: serverTimestamp(),
-
-                emergencyContacts: emergencyContacts,
-
-                historyId: historyRef.id,
-            });
-
-            setSending(false);
             Alert.alert(
                 "✅ SOS Sent",
                 "Emergency alert has been sent successfully.",
                 [
                     {
                         text: "OK",
-                        onPress: () => navigation.navigate("Home"),
+                        onPress: () =>
+                            navigation.navigate("Home"),
                     },
                 ]
             );
-
         } catch (error) {
-            setSending(false);
-            Alert.alert('Error', error.message);
+            console.error("SOS error:", error);
 
+            Alert.alert(
+                "SOS Failed",
+                error.message ||
+                "Unable to send SOS. Please try again."
+            );
+        } finally {
+            setSending(false);
         }
+
     };
     const cancelSOS = () => {
 
